@@ -1,0 +1,11 @@
+flight_id,from_city,to_city,datetime,cost
+FL9769,Buôn Ma Thuột,Phú Quốc,07/09/2025 08:30,1330000
+FL1841,Buôn Ma Thuột,Thanh Hóa,07/09/2025 16:45,640000
+FL8267,Hà Nội,Thành phố Hồ Chí Minh,07/09/2025 09:45,1580000
+FL1958,Vinh,Pleiku,07/09/2025 14:30,1540000
+FL1253,Cần Thơ,Hà Nội,07/09/2025 11:30,1850000
+FL2606,Đà Nẵng,Nha Trang,07/09/2025 08:30,730000
+FL6433,Cần Thơ,Buôn Ma Thuột,07/09/2025 12:30,1260000
+FL3587,Quy Nhơn,Nha Trang,07/09/2025 08:15,1210000
+FL2910,Thành phố Hồ Chí Minh,Cần Thơ,07/09/2025 12:00,1310000
+FL2831,Phú Quốc,Thành phố Hồ Chí Minh,07/10/2025 08:30,560000
