@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from openai import OpenAI
 import unicodedata
 import re
 
@@ -40,3 +41,19 @@ def parse_output(content: str):
     entity_dict = {key: value for key, value in entities}
 
     return intent, entity_dict
+
+def call_llm(prompt, api_key):
+    client = OpenAI(api_key=api_key)
+    messages = [{"role": "system", "content": "You are a intelligent assistant."}]
+    if prompt:
+        messages.append(
+            {"role": "user", "content": prompt},
+        )
+        chat = client.chat.completions.create(
+            model="gpt-4o",
+            messages=messages,
+            temperature=0.0,
+            top_p=0.1
+        )
+    response_llm = chat.choices[0].message.content
+    return response_llm

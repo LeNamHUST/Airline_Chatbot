@@ -1,18 +1,31 @@
 import streamlit as st
-import pandas as pd
-from langchain.prompts import PromptTemplate
-from langchain_community.llms import LlamaCpp
-from langchain_core.runnables import RunnableSequence
-from openai import OpenAI
 from chain.booking_chain import handle_intent
 from utils.utils import *
+from langchain.memory import ConversationBufferMemory
+from langchain.chains import ConversationChain
+from langchain.chat_models import ChatOpenAI
 
-OPENAI_API_KEY = ""
-client = OpenAI(api_key=OPENAI_API_KEY)
-messages = [{"role": "system", "content": "You are a intelligent assistant."}]
 
-with open("prompt/extract_prompt.txt", "r", encoding="utf-8") as f:
-    question = f.read()
+api_key = ""
+
+llm = ChatOpenAI(model="gpt-4o", temperature=0.0, openai_api_key=api_key)
+
+if "memory" not in st.session_state:
+    st.session_state.memory = ConversationBufferMemory(return_messages=True)
+
+memory = st.session_state.memory
+
+conversation_chain = ConversationChain(
+    llm=llm,
+    memory=memory,
+    verbose=True
+)
+
+with open("prompt/booking_prompt.txt", "r", encoding="utf-8") as f:
+    prompt_book = f.read()
+
+with open("prompt/tax_prompt.txt", "r", encoding="utf-8") as f:
+    prompt_tax = f.read()
 
 
 st.set_page_config(page_title="Trợ lý đặt vé máy bay ✈")
@@ -31,6 +44,7 @@ for msg in st.session_state.messages:
 user_input = st.chat_input("Nhập nội dung ...")
 
 if user_input:
+    memory.chat_memory.add_user_message(user_input)
     st.session_state.messages.append({"role":"user", "content":user_input})
 
     with st.chat_message("user"):
@@ -40,7 +54,7 @@ if user_input:
         with st.spinner("Đang xử lý..."):
 
             try:
-                question = question + f"""
+                prompt = prompt_book + f"""
                     Phân tích câu sau:
                     "{user_input}"
                     Trả về định dạng:
@@ -48,19 +62,8 @@ if user_input:
                     Entities:
                       - <entity>: <value>
                     """
-                if question:
-                    messages.append(
-                        {"role": "user", "content": question},
-                    )
-                    chat = client.chat.completions.create(
-                        model="gpt-4o",
-                        messages=messages,
-                        temperature=0.0,
-                        top_p=0.1
-                    )
-                # chain = prompt | llm
-                print('chat:', chat)
-                output = chat.choices[0].message.content
+
+                output = call_llm(prompt, api_key)
                 print('===> DEBUG: output:', output)
 
                 # st.write("### Kết quả từ LLM:")
@@ -68,15 +71,47 @@ if user_input:
 
                 # Xử lý kết quả trả về từ mô hình
                 intent, entities = parse_output(output)
-
+                if "flight_infor" not in st.session_state:
+                    st.session_state.flight_infor = {}
+                st.session_state.flight_infor.update(entities)
+                print('st.session_state.flight_infor:',st.session_state.flight_infor)
                 message, flight_df = handle_intent(intent, entities)
 
                 if flight_df is not None and not flight_df.empty:
                     st.session_state["flight_df"] = flight_df
                     st.session_state["show_flights"] = True
-                else:
+                elif message == "Giá vé này chưa bao gồm thuế ạ, Anh (chị) có muốn em tính giúp giá vé đã bao gồm thuế không ạ?":
                     st.markdown(message)
                     st.session_state.messages.append({"role": "assistant", "content": message})
+                    memory.chat_memory.add_ai_message(message)
+                elif message == "yes":
+                    print('memory.buffer:', memory.buffer)
+                    prompt = f"""Dưới đây là đoạn hội thoại giữa người dùng và trợ lý:
+                                {memory.buffer}
+                                Câu cuối cùng của người dùng là: có
+                                Dựa vào ngữ cảnh hội thoại trước đó, hãy xác định người dùng đang đồng ý điều gì?
+                                Chỉ trả lời ngắn gọn, ví dụ: tính thuế, ..."""
+                    output = call_llm(prompt, api_key)
+                    print('output:', output)
+                    if output == "tính thuế":
+                        adults = st.session_state.flight_infor.get("adults", 0)
+                        children = st.session_state.flight_infor.get("adults", 0)
+                        if adults == 0 and children == 0:
+                            response_bot = "Bạn có thể cung cấp số lượng vé người lớn và vé trẻ em giúp mình được không?"
+                            st.markdown(response_bot)
+                            st.session_state.messages.append({"role": "assistant", "content": response_bot})
+                            memory.chat_memory.add_ai_message(response_bot)
+                        else:
+                            print('gọi đến hàm tính thuế')
+
+
+                else:
+                    print('input:', user_input)
+                    response = conversation_chain.invoke({"input": user_input})
+                    memory.chat_memory.add_ai_message(response['response'])
+                    print('response:', response)
+                    st.markdown(response)
+                    st.session_state.messages.append({"role": "assistant", "content": response})
 
             except Exception as e:
                 st.error(f"Đã xảy ra lỗi: {e}")
@@ -104,6 +139,7 @@ if st.session_state.get("show_flights", False):
                     f"✅ Bạn đã chọn chuyến bay: {flight['flight_id']} từ {flight['from_city']} "
                     f"đến {flight['to_city']} lúc {flight['datetime']} với giá {flight['cost']:,} VND"
                 )
+                memory.chat_memory.add_ai_message(confirm_message)
                 st.success(confirm_message)
                 st.session_state["chosen_flight"] = flight.to_dict()
                 st.session_state.messages.append({"role": "assistant", "content": confirm_message})

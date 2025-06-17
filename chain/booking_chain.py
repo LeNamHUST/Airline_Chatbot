@@ -12,8 +12,8 @@ df["datetime"] = pd.to_datetime(df["datetime"], format="%m/%d/%Y %H:%M:%S", erro
 def handle_intent(intent, entities):
     print('entities:',entities)
     if intent == "book_flight":
-        from_city = remove_vn_tones(entities.get("departure_city"))
-        to_city = remove_vn_tones(entities.get("destination_city"))
+        from_city = remove_vn_tones(entities.get("departure_city")) if entities.get("departure_city") is not None else None
+        to_city = remove_vn_tones(entities.get("destination_city")) if entities.get("destination_city") is not None else None
         date_text = entities.get("departure_date") or entities.get("departure_time") or ""
         date_obj = parse_date(date_text)
         print('date_obj:', date_obj)
@@ -40,5 +40,9 @@ def handle_intent(intent, entities):
             return "Chuyến bay phù hợp", results[["flight_id", "from_city", "to_city", "datetime", "cost"]]
     elif intent == "ask_tax":
         return "Giá vé này chưa bao gồm thuế ạ, Anh (chị) có muốn em tính giúp giá vé đã bao gồm thuế không ạ?", None
+    elif intent == "yes":
+        return "yes", None
+    elif intent == "no":
+        return "no", None
     else:
         return "Câu này khó quá mình chưa biết trả lời bạn như thế nào", None

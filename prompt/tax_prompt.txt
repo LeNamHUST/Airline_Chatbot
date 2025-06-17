@@ -1,0 +1,8 @@
+Dưới đây là đoạn hội thoại giữa người dùng và trợ lý:
+
+{history_conversation}
+
+Câu cuối cùng của người dùng là: có
+
+Dựa vào ngữ cảnh hội thoại trước đó, hãy xác định người dùng đang đồng ý điều gì?
+Chỉ trả lời ngắn gọn, ví dụ: tính thuế, ...
