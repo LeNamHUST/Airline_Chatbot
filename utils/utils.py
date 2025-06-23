@@ -57,3 +57,6 @@ def call_llm(prompt, api_key):
         )
     response_llm = chat.choices[0].message.content
     return response_llm
+
+def calculator_tax(cost, passage_adult, passage_child):
+    return passage_adult*cost*1.1 + passage_child*cost*1.05

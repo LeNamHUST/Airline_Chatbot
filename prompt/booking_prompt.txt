@@ -36,4 +36,23 @@ Kết quả:
 Intent: no
 Entities:
 
+Đầu vào: "cảm ơn" hoặc "chào bạn nhé" (mang ý nghĩa kết thúc cuộc trò chuyện)
+
+Kết quả:
+Intent: end
+Entities:
+
+Đầu vào: "mình muốn hỏi về chính sách đổi trả vé" hoặc "chính sách đổi trả vé được thực hiện như thế nào"
+
+Kết quả:
+Intent: ask_refund_policy
+Entities:
+
+Đầu vào: "tôi có thể mang thú cưng theo không"
+
+Kết quả:
+Intent: ask_pet_policy
+Entities:
+
+
 Yêu cầu: Dự đoán chính xác intent (duy nhất) và entities

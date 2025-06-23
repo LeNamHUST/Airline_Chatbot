@@ -16,10 +16,16 @@ def handle_intent(intent, entities):
         to_city = remove_vn_tones(entities.get("destination_city")) if entities.get("destination_city") is not None else None
         date_text = entities.get("departure_date") or entities.get("departure_time") or ""
         date_obj = parse_date(date_text)
+        passenger_adult = int(entities.get("passenger_adult")) if entities.get("passenger_adult") is not None else None
+        passenger_child = int(entities.get("passenger_child")) if entities.get("passenger_child") is not None else None
         print('date_obj:', date_obj)
 
-        if not from_city or not to_city:
-            return "Không thể xác định thông tin chuyến bay.", None
+        if not from_city and to_city:
+            return "Thiếu điểm khởi hành", None
+        elif from_city and not to_city:
+            return "Thiếu điểm đến", None
+        elif not from_city and not to_city:
+            return "Tính thuế", None
         print('from_city:', from_city)
         print('to_city:', to_city)
         if date_obj is not None:
@@ -35,14 +41,18 @@ def handle_intent(intent, entities):
                 ]
 
         if results.empty:
-            return "Xin lỗi, mình không tìm thấy chuyến bay phù hợp.", None
+            return "Xin lỗi, mình không tìm thấy chuyến bay phù hợp", None
         else:
             return "Chuyến bay phù hợp", results[["flight_id", "from_city", "to_city", "datetime", "cost"]]
     elif intent == "ask_tax":
-        return "Giá vé này chưa bao gồm thuế ạ, Anh (chị) có muốn em tính giúp giá vé đã bao gồm thuế không ạ?", None
+        return "Giá vé này chưa bao gồm thuế ạ, bạn có muốn mình tính giúp giá vé đã bao gồm thuế không ạ?", None
     elif intent == "yes":
         return "yes", None
     elif intent == "no":
         return "no", None
+    elif intent == "ask_refund_policy":
+        return "Hỏi về hoàn vé", None
+    elif intent == "ask_pet_policy":
+        return "Hỏi về thú cưng", None
     else:
         return "Câu này khó quá mình chưa biết trả lời bạn như thế nào", None
